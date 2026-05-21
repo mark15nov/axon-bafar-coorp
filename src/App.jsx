@@ -1123,6 +1123,7 @@ export default function BafarCorporativo() {
   const [npsOpen, setNpsOpen] = useState(false);
   const [showCrucesModal, setShowCrucesModal] = useState(false);
   const [showRiesgoModal, setShowRiesgoModal] = useState(false);
+  const [bannerEnviado, setBannerEnviado] = useState(false);
 
   useEffect(() => {
     if (!periodOpen) return;
@@ -1911,12 +1912,6 @@ export default function BafarCorporativo() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <AgentInsightCard state={engine.state} agentId="centinela" label="Centinela · evitando churn en aliados de alto valor" />
-              <AgentInsightCard state={engine.state} agentId="atlas" label="Atlas · abriendo clusters subatendidos" />
-              <AgentInsightCard state={engine.state} agentId="coyote" label="Coyote · vigilando transacciones anómalas" />
-            </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 24 }}>
               {[
                 { label: 'Activos (pedido <30d)', value: D.activos.toLocaleString('es-MX'), pct: `${Math.round(D.activos/D.aliados*1000)/10}%`, color: C.green },
@@ -2149,80 +2144,308 @@ export default function BafarCorporativo() {
           <div className="bf-fade-up">
             <div style={{ marginBottom: 24 }}>
               <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, letterSpacing: '-0.5px' }}>BAFAR Academy — Métricas</h1>
-              <p style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>Impacto de la plataforma educativa · {isYTD ? 'YTD 2026 (Ene-May)' : periodoActual.label + ' 2026'}</p>
+              <p style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>Impacto de la plataforma educativa · 3 categorías de contenido · {isYTD ? 'YTD 2026 (Ene-May)' : periodoActual.label + ' 2026'}</p>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <AgentInsightCard state={engine.state} agentId="socrates" label="Sócrates · curador IA · recomienda el video correcto al aliado correcto" />
-            </div>
+            {(() => {
+              const PAL = {
+                arquitecto: '#1e3a5f',
+                modelo:     '#9f1239',
+                academy:    '#0f766e',
+                steel:      '#334155',
+                bronze:     '#a16207',
+              };
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
-              {[
-                { label: 'Videos publicados', value: `${({ ene: 38, feb: 40, mar: 42, abr: 45, may: 47, ytd: 47 })[periodId]}`, color: C.red },
-                { label: isYTD ? 'Vistas YTD' : 'Vistas del mes', value: `${({ ene: 11.4, feb: 13.8, mar: 17.2, abr: 21.4, may: 20.4, ytd: 84.2 })[periodId].toFixed(1)}K`, color: C.blue },
-                { label: 'Tasa completado', value: `${({ ene: 71, feb: 72, mar: 73, abr: 73, may: 74, ytd: 73 })[periodId]}%`, color: C.green },
-                { label: 'Aliados que han visto ≥1', value: Math.round(2410 * (D.aliados/DATOS_PERIODO.may.aliados)).toLocaleString('es-MX'), color: C.amber },
-              ].map((m, i) => (
-                <div key={i} className="bf-corp-card" style={{ padding: 20 }}>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{m.label}</div>
-                  <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px' }}>{m.value}</div>
-                </div>
-              ))}
-            </div>
+              const CATEGORIAS = [
+                {
+                  id: 'arquitecto',
+                  titulo: 'Arquitecto de tu propio destino',
+                  tag: 'MENTALIDAD',
+                  subtag: 'mindset · disciplina · visión',
+                  desc: 'Para aliados que quieren dejar de operar para empezar a dirigir su negocio.',
+                  color: PAL.arquitecto,
+                  publicados: 14,
+                  videos: [
+                    { titulo: 'Mentalidad de dueño: dejar de operar y empezar a dirigir', vistas: 6840, completado: 84, dur: '18 min' },
+                    { titulo: 'Los 5 hábitos del aliado que crece 30% al año',            vistas: 5910, completado: 79, dur: '22 min' },
+                    { titulo: 'De empleado a empresario: la transición silenciosa',       vistas: 4720, completado: 76, dur: '15 min' },
+                    { titulo: 'Visión a 10 años: planear tu legado familiar',             vistas: 3580, completado: 71, dur: '24 min' },
+                    { titulo: 'El precio del éxito: rutinas de los aliados Top-100',      vistas: 3120, completado: 68, dur: '19 min' },
+                  ],
+                },
+                {
+                  id: 'modelo',
+                  titulo: 'Modelo de Gestión BAFAR',
+                  tag: 'OPERACIÓN',
+                  subtag: 'sistemas · estándares · liderazgo',
+                  desc: 'El ADN operativo BAFAR — lo que hace al modelo escalable y replicable.',
+                  color: PAL.modelo,
+                  publicados: 16,
+                  videos: [
+                    { titulo: 'El sistema BAFAR de gestión diaria — las 4 disciplinas', vistas: 5840, completado: 88, dur: '26 min' },
+                    { titulo: 'Cómo BAFAR mide la rentabilidad real de cada local',     vistas: 5320, completado: 81, dur: '21 min' },
+                    { titulo: 'Estándares de calidad, temperatura y trazabilidad',      vistas: 4280, completado: 85, dur: '17 min' },
+                    { titulo: 'Negociación con proveedores al estilo BAFAR',            vistas: 3940, completado: 74, dur: '28 min' },
+                    { titulo: 'Liderazgo de equipos: el código BAFAR',                  vistas: 3210, completado: 72, dur: '23 min' },
+                  ],
+                },
+                {
+                  id: 'academy',
+                  titulo: 'BAFAR Academy',
+                  tag: 'HOW-TO',
+                  subtag: 'cocina · costeo · marketing',
+                  desc: 'Contenido operativo y técnico que el aliado aplica esta misma semana.',
+                  color: PAL.academy,
+                  publicados: 17,
+                  videos: [
+                    { titulo: 'Costeo de recetas en 5 min',         vistas: 8420, completado: 78, dur: '7 min'  },
+                    { titulo: 'La hamburguesa perfecta',            vistas: 6840, completado: 92, dur: '14 min' },
+                    { titulo: '10 reglas de marketing local',       vistas: 5210, completado: 65, dur: '12 min' },
+                    { titulo: 'Cómo fijar precios de menú',         vistas: 4890, completado: 71, dur: '9 min'  },
+                    { titulo: 'Pizza estilo NY paso a paso',        vistas: 4120, completado: 88, dur: '16 min' },
+                  ],
+                },
+              ];
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
-              {/* TOP VIDEOS */}
-              <div className="bf-corp-card" style={{ padding: 24 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Videos con mayor impacto</div>
-                <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Ranking por vistas y completado</div>
+              const recomendaciones = [
+                {
+                  insight: 'Variabilidad σ ±41% inter-aliado',
+                  categoria: CATEGORIAS[0].titulo, color: PAL.arquitecto,
+                  video: 'Los 5 hábitos del aliado que crece 30% al año',
+                  razon: 'El tercio inferior compra $28.7K/mes vs $54.2K de la mediana. Este video aterriza las disciplinas que separan al P30 del P70.',
+                  audiencia: '838 aliados',
+                  impacto: '+$2.1M/mes',
+                },
+                {
+                  insight: '62% del basket son marcas externas',
+                  categoria: CATEGORIAS[1].titulo, color: PAL.modelo,
+                  video: 'Negociación con proveedores al estilo BAFAR',
+                  razon: 'Aliados que aún compran fuera de BAFAR no han internalizado el modelo de proveedor único — el video acelera la consolidación.',
+                  audiencia: 'Top-300 con mayor share externo',
+                  impacto: '+$1.3M/mes',
+                },
+                {
+                  insight: '184 aliados inactivos · churn +38% vs Feb',
+                  categoria: CATEGORIAS[0].titulo, color: PAL.arquitecto,
+                  video: 'Mentalidad de dueño: dejar de operar y empezar a dirigir',
+                  razon: 'Los inactivos típicamente cayeron porque el dueño se quedó atrapado operando. Este video reabre la conversación.',
+                  audiencia: '184 inactivos',
+                  impacto: 'rescatar 60% del segmento',
+                },
+                {
+                  insight: 'Cortes premium 18% del mix vs 32% en CarneMart',
+                  categoria: CATEGORIAS[2].titulo, color: PAL.academy,
+                  video: 'Cómo fijar precios de menú',
+                  razon: 'Aliados no suben ticket premium por miedo a perder cliente. El módulo de pricing rompe esa creencia con datos.',
+                  audiencia: '~2,100 aliados con menú estándar',
+                  impacto: '+$0.6M/mes',
+                },
+              ];
 
-                {ACADEMY_STATS.map((v, i) => {
-                  const vistasPeriodo = Math.round(v.vistas * scale);
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: i < ACADEMY_STATS.length-1 ? `1px solid ${C.border}` : 'none' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 3 }}>{v.video}</div>
-                        <div style={{ display: 'flex', gap: 16, fontSize: 10.5, color: C.textMuted }}>
-                          <span>{vistasPeriodo.toLocaleString('es-MX')} vistas</span>
-                          <span style={{ color: C.green }}>{v.completado}% completado</span>
-                          <span style={{ color: C.textDim }}>{v.categoria}</span>
+              const totalVistas = (cat) => cat.videos.reduce((s, v) => s + Math.round(v.vistas * scale), 0);
+              const avgCompletado = (cat) => Math.round(cat.videos.reduce((s, v) => s + v.completado, 0) / cat.videos.length);
+              const grandTotalVistas = CATEGORIAS.reduce((s, c) => s + totalVistas(c), 0);
+              const totalPublicados = CATEGORIAS.reduce((s, c) => s + c.publicados, 0);
+              const avgGlobalCompletado = Math.round(CATEGORIAS.reduce((s, c) => s + avgCompletado(c), 0) / 3);
+              const aliadosActivos = Math.round(2410 * (D.aliados/DATOS_PERIODO.may.aliados));
+
+              return (
+                <>
+                  {/* 4 KPI CARDS */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
+                    {[
+                      { label: 'Videos publicados',                       value: `${totalPublicados}`,                        sub: '3 categorías activas' },
+                      { label: isYTD ? 'Vistas YTD' : 'Vistas del mes',   value: `${(grandTotalVistas/1000).toFixed(1)}K`,    sub: 'agregado todas las categorías' },
+                      { label: 'Tasa de completado',                      value: `${avgGlobalCompletado}%`,                   sub: 'promedio ponderado' },
+                      { label: 'Aliados que han visto ≥1',                value: aliadosActivos.toLocaleString('es-MX'),       sub: `${Math.round(aliadosActivos/D.aliados*100)}% de la red activa` },
+                    ].map((m, i) => (
+                      <div key={i} className="bf-corp-card" style={{ padding: 20 }}>
+                        <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{m.label}</div>
+                        <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1 }}>{m.value}</div>
+                        <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 8 }}>{m.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 3 CATEGORÍAS */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 16 }}>
+                    {CATEGORIAS.map((cat) => (
+                      <div key={cat.id} className="bf-corp-card" style={{ padding: 22, position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: cat.color }} />
+
+                        <div style={{ marginBottom: 14, paddingTop: 6 }}>
+                          <div style={{ fontSize: 9.5, fontWeight: 800, color: cat.color, letterSpacing: 1, marginBottom: 5 }}>{cat.tag} · {cat.subtag}</div>
+                          <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px', lineHeight: 1.25, marginBottom: 5 }}>{cat.titulo}</div>
+                          <div style={{ fontSize: 10.5, color: C.textMuted, lineHeight: 1.45 }}>{cat.desc}</div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 16 }}>
+                          <div style={{ background: C.surface, borderRadius: 8, padding: 10 }}>
+                            <div style={{ fontSize: 8.5, color: C.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>Videos</div>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: cat.color, marginTop: 2 }}>{cat.publicados}</div>
+                          </div>
+                          <div style={{ background: C.surface, borderRadius: 8, padding: 10 }}>
+                            <div style={{ fontSize: 8.5, color: C.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>Vistas</div>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: C.text, marginTop: 2 }}>{(totalVistas(cat)/1000).toFixed(1)}K</div>
+                          </div>
+                          <div style={{ background: C.surface, borderRadius: 8, padding: 10 }}>
+                            <div style={{ fontSize: 8.5, color: C.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>Completado</div>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: PAL.academy, marginTop: 2 }}>{avgCompletado(cat)}%</div>
+                          </div>
+                        </div>
+
+                        <div style={{ fontSize: 9.5, fontWeight: 800, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>Top videos</div>
+                        {cat.videos.map((v, i, arr) => {
+                          const vistasP = Math.round(v.vistas * scale);
+                          return (
+                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 0', borderBottom: i < arr.length-1 ? `1px solid ${C.border}` : 'none' }}>
+                              <span style={{ fontSize: 9, fontWeight: 800, color: C.textDim, width: 14, textAlign: 'right', flexShrink: 0, marginTop: 2 }}>{i+1}</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 11.5, fontWeight: 600, color: C.text, lineHeight: 1.35 }}>{v.titulo}</div>
+                                <div style={{ display: 'flex', gap: 10, fontSize: 9.5, color: C.textMuted, marginTop: 3, flexWrap: 'wrap' }}>
+                                  <span>{vistasP.toLocaleString('es-MX')} vistas</span>
+                                  <span style={{ color: PAL.academy, fontWeight: 700 }}>{v.completado}%</span>
+                                  <span style={{ color: C.textDim }}>{v.dur}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* RECOMENDACIÓN A PARTIR DE LA INFORMACIÓN COMERCIAL */}
+                  <div className="bf-corp-card" style={{
+                    padding: 24, marginBottom: 16,
+                    background: `linear-gradient(135deg, ${PAL.arquitecto}08 0%, ${PAL.steel}06 100%)`,
+                    border: `1px solid ${PAL.arquitecto}28`,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18, gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 280 }}>
+                        <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px', marginBottom: 6 }}>A partir de la información COMERCIAL, se recomienda:</div>
+                        <div style={{ fontSize: 11.5, color: C.textMuted, lineHeight: 1.5 }}>Videos priorizados según las brechas detectadas en el dashboard comercial · cada cápsula está alineada al análisis avanzado de oportunidades</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 9, color: C.textDim, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>4 cápsulas activadas</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: PAL.arquitecto, marginTop: 4, letterSpacing: '-0.3px' }}>→ $4.0M/mes potencial</div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                      {recomendaciones.map((r, i) => (
+                        <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `4px solid ${r.color}`, borderRadius: 10, padding: 14 }}>
+                          <div style={{ fontSize: 9, fontWeight: 800, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>
+                            Dato comercial · <span style={{ color: r.color }}>{r.insight}</span>
+                          </div>
+                          <div style={{ fontSize: 13.5, fontWeight: 800, color: C.text, lineHeight: 1.35, marginBottom: 6 }}>
+                            "{r.video}"
+                          </div>
+                          <div style={{ fontSize: 9.5, fontWeight: 800, color: r.color, letterSpacing: 0.6, marginBottom: 8, textTransform: 'uppercase' }}>{r.categoria}</div>
+                          <div style={{ fontSize: 11, color: C.text, lineHeight: 1.5, marginBottom: 10 }}>{r.razon}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: `1px solid ${C.border}`, gap: 8 }}>
+                            <span style={{ fontSize: 10, color: C.textMuted }}>Audiencia: <b style={{ color: C.text }}>{r.audiencia}</b></span>
+                            <span style={{ fontSize: 10.5, fontWeight: 800, color: PAL.academy, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{r.impacto}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {!bannerEnviado ? (
+                      <button
+                        onClick={() => setBannerEnviado(true)}
+                        style={{
+                          width: '100%',
+                          background: `linear-gradient(135deg, ${PAL.arquitecto} 0%, ${PAL.steel} 100%)`,
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 12,
+                          padding: '16px 22px',
+                          fontSize: 13,
+                          fontWeight: 800,
+                          letterSpacing: 0.7,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          boxShadow: `0 4px 14px ${PAL.arquitecto}30`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                          textTransform: 'uppercase',
+                          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 6px 20px ${PAL.arquitecto}40`; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 4px 14px ${PAL.arquitecto}30`; }}
+                      >
+                        <span style={{ background: 'rgba(255,255,255,0.18)', padding: '3px 9px', borderRadius: 5, fontSize: 9, letterSpacing: 1, fontWeight: 800 }}>↗ Difusión</span>
+                        <span>Enviar Banner a la red de socios</span>
+                        <span style={{ fontSize: 16, opacity: 0.85 }}>→</span>
+                      </button>
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        background: `${PAL.academy}12`,
+                        border: `1px solid ${PAL.academy}40`,
+                        borderRadius: 12,
+                        padding: '14px 20px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: PAL.academy, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>✓</div>
+                          <div>
+                            <div style={{ fontSize: 12.5, fontWeight: 800, color: PAL.academy, letterSpacing: 0.3 }}>Banner enviado a {D.activos.toLocaleString('es-MX')} aliados</div>
+                            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 2 }}>4 cápsulas se mostrarán al iniciar sesión en la app · seguimiento de apertura en 24 h</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setBannerEnviado(false)}
+                          style={{ background: 'transparent', border: `1px solid ${PAL.academy}40`, color: PAL.academy, fontSize: 10, fontWeight: 800, padding: '6px 12px', borderRadius: 6, letterSpacing: 0.6, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'uppercase' }}
+                        >
+                          Reenviar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CORRELACIÓN + ROI CALLOUT */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
+                    <div className="bf-corp-card" style={{ padding: 24 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Correlación Academy → Ventas</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Impacto medido en comportamiento de compra · por categoría de contenido</div>
+
+                      {[
+                        { label: 'Aliados que ven ≥3 videos compran',         value: '+22%', desc: 'más que los que no participan',            color: PAL.academy },
+                        { label: '"Mentalidad de dueño" (Arquitecto)',         value: '+34%', desc: 'frecuencia de compra a 90 días',          color: PAL.arquitecto },
+                        { label: '"Costeo de recetas" (Academy)',              value: '+31%', desc: 'aumento en margen reportado',             color: PAL.academy },
+                        { label: '"Sistema BAFAR de gestión diaria" (Modelo)', value: '+27%', desc: 'reducción de variabilidad operativa',     color: PAL.modelo },
+                        { label: '"La hamburguesa perfecta" (Academy)',        value: '+18%', desc: 'aumento en compra de carne BAFAR',        color: PAL.academy },
+                      ].map((ins, i, arr) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: i < arr.length-1 ? `1px solid ${C.border}` : 'none', gap: 12 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{ins.label}</div>
+                            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 2 }}>{ins.desc}</div>
+                          </div>
+                          <span style={{ fontSize: 22, fontWeight: 800, color: ins.color, fontFamily: 'ui-monospace, SFMono-Regular, monospace', letterSpacing: '-0.3px' }}>{ins.value}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ background: `linear-gradient(135deg, ${PAL.arquitecto} 0%, ${PAL.steel} 100%)`, borderRadius: 16, padding: 24, color: 'white' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.18)', padding: '3px 9px', borderRadius: 4, fontSize: 9, fontWeight: 800, letterSpacing: 1, display: 'inline-block', marginBottom: 12 }}>ROI ACADEMY</div>
+                      <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 10, lineHeight: 1.3 }}>BAFAR Academy no es un costo. Es una inversión con ROI medible.</div>
+                      <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.6 }}>Cada aliado que ve al menos 3 videos genera en promedio <b>$4,200 adicionales/mes</b> en compras vs los que no participan. Con <b>{aliadosActivos.toLocaleString('es-MX')}</b> aliados activos, el impacto estimado es de <b>${(aliadosActivos * 4200 * 12 / 1e6).toFixed(1)}M anuales</b> en ventas incrementales.</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
+                        <div style={{ background: 'rgba(255,255,255,0.10)', borderRadius: 10, padding: 12 }}>
+                          <div style={{ fontSize: 9, opacity: 0.75, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase' }}>Costo plataforma</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>$2.4M / año</div>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.10)', borderRadius: 10, padding: 12 }}>
+                          <div style={{ fontSize: 9, opacity: 0.75, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase' }}>ROI estimado</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>{(aliadosActivos * 4200 * 12 / 2_400_000).toFixed(1)}×</div>
                         </div>
                       </div>
-                      <div style={{ width: 48, textAlign: 'center' }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? C.amber : C.text }}>#{i+1}</div>
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* INSIGHT DE IMPACTO */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div className="bf-corp-card" style={{ padding: 24 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Correlación Academy → Ventas</div>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 20 }}>Impacto medido en comportamiento de compra</div>
-
-                  {[
-                    { label: 'Aliados que ven videos compran', value: '+22%', desc: 'más que los que no ven', color: C.green },
-                    { label: 'Video "Costeo de recetas"', value: '+31%', desc: 'aumento en margen reportado', color: C.amber },
-                    { label: 'Video "La hamburguesa perfecta"', value: '+18%', desc: 'aumento en compra de carne BAFAR', color: C.red },
-                  ].map((ins, i) => (
-                    <div key={i} style={{ background: C.surface, borderRadius: 12, padding: 16, marginBottom: i < 2 ? 10 : 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{ins.label}</div>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                        <span style={{ fontSize: 24, fontWeight: 800, color: ins.color }}>{ins.value}</span>
-                        <span style={{ fontSize: 11, color: C.textMuted }}>{ins.desc}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{ background: `linear-gradient(135deg, ${C.red} 0%, #8b0a1f 100%)`, borderRadius: 16, padding: 24, color: 'white' }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, lineHeight: 1.3 }}>BAFAR Academy no es un costo. Es una inversión con ROI medible.</div>
-                  <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.6 }}>Cada aliado que ve al menos 3 videos genera en promedio $4,200 adicionales en compras mensuales vs los que no participan. Con {Math.round(2410 * (D.aliados/DATOS_PERIODO.may.aliados)).toLocaleString('es-MX')} aliados activos en Academy, el impacto estimado es de ${(Math.round(2410 * (D.aliados/DATOS_PERIODO.may.aliados)) * 4200 * 12 / 1e6).toFixed(1)}M anuales en ventas incrementales.</div>
-                </div>
-              </div>
-            </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
