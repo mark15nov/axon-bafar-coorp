@@ -1123,6 +1123,7 @@ export default function BafarCorporativo() {
   const [npsOpen, setNpsOpen] = useState(false);
   const [showCrucesModal, setShowCrucesModal] = useState(false);
   const [showRiesgoModal, setShowRiesgoModal] = useState(false);
+  const [analisisFase, setAnalisisFase] = useState('cerrado'); // 'cerrado' | 'cargando' | 'abierto'
   const [bannerEnviado, setBannerEnviado] = useState(false);
 
   useEffect(() => {
@@ -1578,11 +1579,6 @@ export default function BafarCorporativo() {
               <p style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>Métricas de conversión, ticket y frecuencia de compra de la red Aliados</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <AgentInsightCard state={engine.state} agentId="mercurio" label="Mercurio · optimizando pricing y multiplicadores de Puntos" />
-              <AgentInsightCard state={engine.state} agentId="vega" label="Vega · forecast por marca, supply ya ajustado" />
-            </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
               {[
                 { label: 'Ticket promedio', value: `$${D.ticket.toLocaleString('es-MX')}`, sub: `+${D.vsMA.ticket}% vs. MA`, color: C.blue },
@@ -1598,96 +1594,129 @@ export default function BafarCorporativo() {
               ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              {/* PRODUCTOS MÁS PEDIDOS */}
-              <div className="bf-corp-card" style={{ padding: 24 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Productos más pedidos</div>
-                <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 14 }}>Ranking por volumen (unidades vendidas) · {isYTD ? 'YTD 2026' : periodoActual.label + ' 2026'}</div>
+            {(() => {
+              const factor = D.pedidos / DATOS_PERIODO.may.pedidos;
+              const renderRanking = (titulo, subtitulo, productos) => (
+                <div className="bf-corp-card" style={{ padding: 24 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{titulo}</div>
+                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 14 }}>{subtitulo} · {isYTD ? 'YTD 2026' : periodoActual.label + ' 2026'}</div>
 
-                {/* Header columnas */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, marginBottom: 12, borderBottom: `1px solid ${C.border}` }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase' }}>Producto</div>
-                  <div style={{ display: 'flex', gap: 24 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', width: 80, textAlign: 'right' }}>Unidades</div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', width: 70, textAlign: 'right' }}>Ventas</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, marginBottom: 12, borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase' }}>Producto</div>
+                    <div style={{ display: 'flex', gap: 24 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', width: 80, textAlign: 'right' }}>Unidades</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', width: 70, textAlign: 'right' }}>Ventas</div>
+                    </div>
                   </div>
-                </div>
 
-                {[
-                  { producto: 'Carne molida de res', marca: 'BAFAR Carnes', unidades: 4820, precio: 380, pct: 100 },
-                  { producto: 'Hamburguesa 150g',    marca: 'BAFAR Carnes', unidades: 3940, precio: 290, pct: 82 },
-                  { producto: 'Queso mozzarella rallado', marca: 'SABORI',  unidades: 3680, precio: 245, pct: 76 },
-                  { producto: 'Pepperoni rebanado',  marca: 'BURR',         unidades: 3210, precio: 320, pct: 67 },
-                  { producto: 'Pechuga de pollo',    marca: 'MONTECILLO',   unidades: 2840, precio: 260, pct: 59 },
-                  { producto: 'Salchicha tipo viena', marca: 'LA CHONA',    unidades: 2120, precio: 145, pct: 44 },
-                  { producto: 'Tocino ahumado',      marca: 'CAPERUCITA',   unidades: 1890, precio: 195, pct: 39 },
-                ].map((p, i) => {
-                  const factor = D.pedidos / DATOS_PERIODO.may.pedidos;
-                  const unidadesPeriodo = Math.round(p.unidades * factor);
-                  const ventasPeriodo = (unidadesPeriodo * p.precio) / 1000; // K MXN
-                  return (
-                    <div key={i} style={{ marginBottom: 14 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: C.textDim, width: 16 }}>{i+1}</span>
-                          <div>
-                            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{p.producto}</span>
-                            <span style={{ fontSize: 10.5, color: C.textMuted, marginLeft: 8 }}>{p.marca}</span>
+                  {productos.map((p, i) => {
+                    const unidadesPeriodo = Math.round(p.unidades * factor);
+                    const ventasPeriodo = (unidadesPeriodo * p.precio) / 1000; // K MXN
+                    return (
+                      <div key={i} style={{ marginBottom: 14 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: C.textDim, width: 16 }}>{i+1}</span>
+                            <div>
+                              <span style={{ fontSize: 12.5, fontWeight: 600 }}>{p.producto}</span>
+                              <span style={{ fontSize: 10.5, color: C.textMuted, marginLeft: 8 }}>{p.marca}</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 24, alignItems: 'baseline' }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, width: 80, textAlign: 'right' }}>
+                              {unidadesPeriodo.toLocaleString('es-MX')}
+                            </span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: C.green, width: 70, textAlign: 'right' }}>
+                              ${ventasPeriodo >= 1000 ? `${(ventasPeriodo/1000).toFixed(1)}M` : `${Math.round(ventasPeriodo)}K`}
+                            </span>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: 24, alignItems: 'baseline' }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, width: 80, textAlign: 'right' }}>
-                            {unidadesPeriodo.toLocaleString('es-MX')}
-                          </span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: C.green, width: 70, textAlign: 'right' }}>
-                            ${ventasPeriodo >= 1000 ? `${(ventasPeriodo/1000).toFixed(1)}M` : `${Math.round(ventasPeriodo)}K`}
-                          </span>
+                        <HBar pct={p.pct} color={C.red} height={4} />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+
+              const prodsBafar = [
+                { producto: 'Carne molida de res', marca: 'BAFAR Carnes', unidades: 4820, precio: 380, pct: 100 },
+                { producto: 'Hamburguesa 150g',    marca: 'BAFAR Carnes', unidades: 3940, precio: 290, pct: 82 },
+                { producto: 'Queso mozzarella rallado', marca: 'SABORI',  unidades: 3680, precio: 245, pct: 76 },
+                { producto: 'Pepperoni rebanado',  marca: 'BURR',         unidades: 3210, precio: 320, pct: 67 },
+                { producto: 'Pechuga de pollo',    marca: 'MONTECILLO',   unidades: 2840, precio: 260, pct: 59 },
+                { producto: 'Salchicha tipo viena', marca: 'LA CHONA',    unidades: 2120, precio: 145, pct: 44 },
+                { producto: 'Tocino ahumado',      marca: 'CAPERUCITA',   unidades: 1890, precio: 195, pct: 39 },
+              ];
+              const prodsFuera = [
+                { producto: 'Aceite vegetal 5L',     marca: 'NUTRIOLI',        unidades: 2640, precio: 185, pct: 100 },
+                { producto: 'Harina de trigo 25kg',  marca: 'TRES ESTRELLAS',  unidades: 2180, precio: 420, pct: 83 },
+                { producto: 'Queso amarillo',        marca: 'KRAFT',           unidades: 1950, precio: 215, pct: 74 },
+                { producto: 'Tortilla de maíz',      marca: 'MASECA',          unidades: 1820, precio:  95, pct: 69 },
+                { producto: 'Papa congelada gajo',   marca: 'McCAIN',          unidades: 1540, precio: 310, pct: 58 },
+                { producto: 'Cátsup 4kg',            marca: 'HEINZ',           unidades: 1180, precio: 125, pct: 45 },
+                { producto: 'Mayonesa 4kg',          marca: 'McCORMICK',       unidades:  920, precio: 145, pct: 35 },
+              ];
+              const prodsCarneMart = [
+                { producto: 'Arrachera marinada',     marca: 'CARNEMART',          unidades: 3520, precio: 420, pct: 100 },
+                { producto: 'Rib eye 280g',           marca: 'CARNEMART PREMIUM',  unidades: 2890, precio: 620, pct: 82 },
+                { producto: 'Costilla BBQ',           marca: 'BAFAR Carnes',       unidades: 2680, precio: 480, pct: 76 },
+                { producto: 'T-Bone 350g',            marca: 'CARNEMART PREMIUM',  unidades: 2140, precio: 720, pct: 61 },
+                { producto: 'Picaña',                 marca: 'CARNEMART',          unidades: 1920, precio: 540, pct: 55 },
+                { producto: 'Brisket ahumado',        marca: 'BAFAR Carnes',       unidades: 1650, precio: 560, pct: 47 },
+                { producto: 'Chorizo argentino',      marca: 'LA CHONA',           unidades: 1380, precio: 185, pct: 39 },
+              ];
+
+              return (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                    {renderRanking('Productos más pedidos', 'Ranking por volumen (unidades vendidas)', prodsBafar)}
+                    {renderRanking('Productos más pedidos fuera de BAFAR', 'Complementarios de marcas externas en Aliados', prodsFuera)}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                    {renderRanking('Productos más pedidos en CarneMart', 'Ranking por volumen · canal retail CarneMart', prodsCarneMart)}
+
+                    {/* BAFAR PUNTOS */}
+                    <div className="bf-corp-card" style={{ padding: 24 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Programa BAFAR Puntos</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Métricas del programa de lealtad</div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                        <div style={{ background: C.surface, borderRadius: 12, padding: 16 }}>
+                          <div style={{ fontSize: 10, color: C.amber, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Puntos emitidos</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{D.puntos.toFixed(2)}M</div>
+                          <div style={{ fontSize: 10, color: C.textMuted }}>{isYTD ? 'YTD 2026 (Ene-May)' : periodoActual.label + ' 2026'}</div>
+                        </div>
+                        <div style={{ background: C.surface, borderRadius: 12, padding: 16 }}>
+                          <div style={{ fontSize: 10, color: C.green, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Puntos canjeados</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{(D.puntos * 0.394).toFixed(2)}M</div>
+                          <div style={{ fontSize: 10, color: C.textMuted }}>tasa canje: 39.4%</div>
                         </div>
                       </div>
-                      <HBar pct={p.pct} color={C.red} height={4} />
+
+                      <div style={{ background: C.surface, borderRadius: 12, padding: 16, marginBottom: 20 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Impacto en comportamiento de compra</div>
+                        {[
+                          { label: 'Aliados con puntos compran', value: '2.4x más', color: C.green },
+                          { label: 'Ticket promedio con puntos', value: '+38%', color: C.amber },
+                          { label: 'Retención aliados con puntos', value: '96%', color: C.blue },
+                        ].map((stat, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < 2 ? `1px solid ${C.border}` : 'none' }}>
+                            <span style={{ fontSize: 12, color: C.textMuted }}>{stat.label}</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: stat.color }}>{stat.value}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ background: `${C.amber}10`, borderRadius: 12, padding: 14, border: `1px solid ${C.amber}25` }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: C.amber, marginBottom: 4 }}>Insight clave</div>
+                        <div style={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>El 96% de los aliados con saldo activo de puntos reordenan dentro de los 30 días. El programa de lealtad es el principal driver de retención.</div>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* BAFAR PUNTOS */}
-              <div className="bf-corp-card" style={{ padding: 24 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Programa BAFAR Puntos</div>
-                <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Métricas del programa de lealtad</div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-                  <div style={{ background: C.surface, borderRadius: 12, padding: 16 }}>
-                    <div style={{ fontSize: 10, color: C.amber, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Puntos emitidos</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{D.puntos.toFixed(2)}M</div>
-                    <div style={{ fontSize: 10, color: C.textMuted }}>{isYTD ? 'YTD 2026 (Ene-May)' : periodoActual.label + ' 2026'}</div>
                   </div>
-                  <div style={{ background: C.surface, borderRadius: 12, padding: 16 }}>
-                    <div style={{ fontSize: 10, color: C.green, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Puntos canjeados</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{(D.puntos * 0.394).toFixed(2)}M</div>
-                    <div style={{ fontSize: 10, color: C.textMuted }}>tasa canje: 39.4%</div>
-                  </div>
-                </div>
-
-                <div style={{ background: C.surface, borderRadius: 12, padding: 16, marginBottom: 20 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Impacto en comportamiento de compra</div>
-                  {[
-                    { label: 'Aliados con puntos compran', value: '2.4x más', color: C.green },
-                    { label: 'Ticket promedio con puntos', value: '+38%', color: C.amber },
-                    { label: 'Retención aliados con puntos', value: '96%', color: C.blue },
-                  ].map((stat, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < 2 ? `1px solid ${C.border}` : 'none' }}>
-                      <span style={{ fontSize: 12, color: C.textMuted }}>{stat.label}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: stat.color }}>{stat.value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{ background: `${C.amber}10`, borderRadius: 12, padding: 14, border: `1px solid ${C.amber}25` }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.amber, marginBottom: 4 }}>Insight clave</div>
-                  <div style={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>El 96% de los aliados con saldo activo de puntos reordenan dentro de los 30 días. El programa de lealtad es el principal driver de retención.</div>
-                </div>
-              </div>
-            </div>
+                </>
+              );
+            })()}
 
             {/* ═══ DESEMPEÑO POR CANAL DE COMPRA ═══ */}
             {(() => {
@@ -1871,6 +1900,518 @@ export default function BafarCorporativo() {
                       ~<b style={{ color: C.green }}>${((peorCanal.pedidos * 0.10 * (peorCanal.costoUnit - mejorCanal.costoUnit))/1000).toFixed(0)}K</b> mensuales en costo logístico.
                     </div>
                   </div>
+                </div>
+              );
+            })()}
+
+            {/* ═══ INTELIGENCIA DE MERCADO — BIG DATA DE LA RED ═══ */}
+            {(() => {
+              // Paleta seria para gráficas (corporate financial dashboard)
+              const CHART = {
+                navy:     '#1e3a5f',
+                slate:    '#475569',
+                teal:     '#0f766e',
+                bronze:   '#a16207',
+                burgundy: '#9f1239',
+                steel:    '#334155',
+                cool:     '#94a3b8',
+              };
+
+              const periodoLbl = isYTD ? 'YTD 2026' : periodoActual.label + ' 2026';
+              const comprasBafar = D.ventas;
+              const comprasExternos = comprasBafar * 0.62;
+              const comprasTotales = comprasBafar + comprasExternos;
+              const ventasRed = comprasTotales * 2.95;
+              const gastoOpRed = ventasRed * 0.42;
+              const utilidadRed = ventasRed - comprasTotales - gastoOpRed;
+              const margenConsolidado = (utilidadRed / ventasRed) * 100;
+
+              const composicion = [
+                { cat: 'Nómina y prestaciones',   pct: 26, color: CHART.navy },
+                { cat: 'Insumos no-cárnicos',     pct: 22, color: CHART.bronze },
+                { cat: 'Renta de local',          pct: 14, color: CHART.slate },
+                { cat: 'Energía, gas y agua',     pct:  9, color: CHART.teal },
+                { cat: 'Mantenimiento y equipo',  pct:  8, color: CHART.steel },
+                { cat: 'Marketing y publicidad',  pct:  6, color: CHART.bronze },
+                { cat: 'Logística y reparto',     pct:  5, color: CHART.slate },
+                { cat: 'Comisiones bancarias',    pct:  4, color: CHART.burgundy },
+                { cat: 'Otros gastos',            pct:  6, color: CHART.cool },
+              ];
+              const maxComp = Math.max(...composicion.map(c => c.pct));
+
+              const semanal = [
+                { dia: 'L', pct: 78, label: '$1.8M' },
+                { dia: 'M', pct: 95, label: '$2.2M' },
+                { dia: 'X', pct:100, label: '$2.3M' },
+                { dia: 'J', pct: 88, label: '$2.0M' },
+                { dia: 'V', pct: 62, label: '$1.4M' },
+                { dia: 'S', pct: 28, label: '$0.6M' },
+                { dia: 'D', pct: 14, label: '$0.3M' },
+              ];
+              const horarios = [
+                { hora: '06–09', pct: 24 },
+                { hora: '09–12', pct: 78 },
+                { hora: '12–15', pct:100 },
+                { hora: '15–18', pct: 65 },
+                { hora: '18–21', pct: 38 },
+                { hora: '21–24', pct: 12 },
+              ];
+
+              const catsVenta = [
+                { cat: 'Cortes y carnes preparadas',  pct: 38, vol: '$4.32M' },
+                { cat: 'Comida preparada caliente',   pct: 24, vol: '$2.73M' },
+                { cat: 'Embutidos y procesados',      pct: 14, vol: '$1.59M' },
+                { cat: 'Pizza, pastas y derivados',   pct:  9, vol: '$1.02M' },
+                { cat: 'Lácteos y quesos',            pct:  8, vol: '$0.91M' },
+                { cat: 'Otros',                       pct:  7, vol: '$0.80M' },
+              ];
+              const maxCatVenta = Math.max(...catsVenta.map(c => c.pct));
+
+              const giros = [
+                { nombre: 'Restaurante full-service',  count: Math.round(D.activos*0.32), pctCompras: 38, ticket: 2890, color: CHART.navy },
+                { nombre: 'Quick service & fast food', count: Math.round(D.activos*0.24), pctCompras: 28, ticket: 2120, color: CHART.bronze },
+                { nombre: 'Fonda y cocina económica',  count: Math.round(D.activos*0.18), pctCompras: 12, ticket: 1450, color: CHART.slate },
+                { nombre: 'Carnicería de detalle',     count: Math.round(D.activos*0.11), pctCompras:  9, ticket: 1820, color: CHART.teal },
+                { nombre: 'Catering y banquetes',      count: Math.round(D.activos*0.07), pctCompras:  7, ticket: 3850, color: CHART.burgundy },
+                { nombre: 'Hoteles y hospitalidad',    count: Math.round(D.activos*0.05), pctCompras:  4, ticket: 4250, color: CHART.steel },
+                { nombre: 'Abarrotes y abasto',        count: Math.round(D.activos*0.03), pctCompras:  2, ticket: 1180, color: CHART.cool },
+              ];
+
+              const kpisAvanzados = [
+                { label: 'Días inventario promedio',  value: '8.4',    unit: 'días',         color: CHART.navy },
+                { label: 'Ciclo conversión efectivo', value: '14.2',   unit: 'días',         color: CHART.bronze },
+                { label: 'Margen bruto promedio',     value: '32.6%',  unit: 'sobre venta',  color: CHART.teal },
+                { label: 'Rotación de inventario',    value: '43.5×',  unit: 'al año',       color: CHART.slate },
+                { label: 'Compra promedio',           value: '$54.2K', unit: '/aliado/mes',  color: CHART.burgundy },
+                { label: 'Variabilidad σ',            value: '±41%',   unit: 'inter-aliado', color: CHART.steel },
+              ];
+
+              // Oportunidades del análisis avanzado
+              const opCrossSellM = comprasExternos * 0.18; // 18% capturable de la canasta externa
+              const oportunidades = [
+                {
+                  titulo: 'Sustituir marcas externas con catálogo BAFAR',
+                  color: CHART.navy,
+                  costoMes: `$${opCrossSellM.toFixed(1)}M`,
+                  captura: `+$${(opCrossSellM * 0.7).toFixed(1)}M`,
+                  ttm: '4–6 meses', roi: '3.2×',
+                  confianza: 'Confianza alta', confColor: CHART.teal,
+                  hallazgo: `62% de la canasta del aliado son marcas externas ($${comprasExternos.toFixed(1)}M/mes). 12 productos BAFAR del catálogo actual pueden sustituir los principales de NUTRIOLI, MASECA y McCAIN.`,
+                  accion: 'Bonificación cruzada 1.8× en puntos sobre productos sustituibles + visita comercial dirigida a los 300 aliados con mayor participación de marcas externas.',
+                },
+                {
+                  titulo: 'Activar fines de semana subutilizados',
+                  color: CHART.bronze,
+                  costoMes: '$2.4M',
+                  captura: '+$1.6M',
+                  ttm: '2 meses', roi: '4.1×',
+                  confianza: 'Confianza media', confColor: CHART.bronze,
+                  hallazgo: 'Sábado opera al 28% y domingo al 14% del pico entre semana. 71% del volumen se concentra en L–M–X. Aliados de eventos y banquetes operan justo en fines de semana y están subatendidos.',
+                  accion: 'Devolución 5% Sáb–Dom + portafolio curado "Eventos y Banquetes" + entrega gratuita en fines de semana para pedidos mayores a $8K.',
+                },
+                {
+                  titulo: 'Cerrar la variabilidad inter-aliado (σ ±41%)',
+                  color: CHART.burgundy,
+                  costoMes: '$3.6M',
+                  captura: '+$2.1M',
+                  ttm: '9 meses', roi: '2.8×',
+                  confianza: 'Confianza media', confColor: CHART.bronze,
+                  hallazgo: 'El tercio inferior compra $28.7K/mes vs $54.2K de la mediana. Si la cola baja llega a la mediana, la red captura $3.6M/mes — brecha explicable por madurez operativa, no por mercado.',
+                  accion: 'Programa "Subir a la mediana": Academy obligatoria + ejecutivo de cuenta clave dedicado + comparativo mensual contra giros similares en la misma plaza.',
+                },
+                {
+                  titulo: 'Hotelería y banquetes — segmentos de alta gama subexpuestos',
+                  color: CHART.teal,
+                  costoMes: '$1.9M',
+                  captura: '+$1.4M',
+                  ttm: '6 meses', roi: '3.6×',
+                  confianza: 'Confianza alta', confColor: CHART.teal,
+                  hallazgo: 'Hoteles 5% de la red con ticket $4,250 (+45% sobre promedio) y banquetes 7% con $3,850. Mercado direccionable hotelero México: ~3,100 propiedades — penetración actual menor a 6%.',
+                  accion: 'Equipo dedicado de adquisición comercial de alta gama + portafolio "Hostelería Pro" + contratos marco con cadenas hoteleras del Bajío y CDMX.',
+                },
+                {
+                  titulo: 'Academy obligatoria en los 300 principales sin certificar',
+                  color: CHART.steel,
+                  costoMes: '$1.4M',
+                  captura: '+$1.2M',
+                  ttm: '3 meses', roi: '5.2×',
+                  confianza: 'Confianza muy alta', confColor: CHART.teal,
+                  hallazgo: '838 aliados activos sin Academy (–26% ticket vs certificados). 312 están en el 30% superior de volumen — perder ticket en aliados grandes es la brecha más costosa por unidad.',
+                  accion: 'Academy Plus dedicada a los 300 principales con bonificación de fin de año (5,000 puntos si certifican antes del tercer trimestre). Capacitación presencial a cargo del ejecutivo de cuenta clave.',
+                },
+                {
+                  titulo: 'Premiumización dentro de cortes y carnes',
+                  color: CHART.slate,
+                  costoMes: '$0.9M',
+                  captura: '+$0.6M',
+                  ttm: '3 meses', roi: '3.9×',
+                  confianza: 'Confianza alta', confColor: CHART.teal,
+                  hallazgo: 'Cortes y carnes preparadas = 38% de las ventas del aliado. Los cortes de alta gama (rib eye, T-bone, picaña) representan apenas 18% de esa categoría — la referencia CarneMart muestra techo natural en 32%.',
+                  accion: 'Catálogo "CarneMart Pro" listado de forma cruzada en BAFAR Aliados + descuento 8% en 6 productos piloto + recetario de margen alto entregado al aliado.',
+                },
+              ];
+              const opTotalMes = opCrossSellM + 2.4 + 3.6 + 1.9 + 1.4 + 0.9;
+              const opTotalAnual = opTotalMes * 12;
+              const quickWinsMes = opCrossSellM*0 + 2.4 + 1.4 + 0.9; // TTM <= 3m: findes, academy, premium
+
+              return (
+                <div style={{ marginTop: 24 }}>
+                  {/* HEADER + 3 MEGA-KPIs */}
+                  <div className="bf-corp-card" style={{ padding: 28, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22, gap: 16 }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                          <div style={{ background: CHART.navy, color: 'white', fontSize: 9, fontWeight: 800, letterSpacing: 1, padding: '3px 8px', borderRadius: 4 }}>BIG DATA</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.4px' }}>Inteligencia de Mercado · Comportamiento agregado de la red</div>
+                        </div>
+                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>
+                          Vista 360° de <b style={{ color: C.text }}>{D.activos.toLocaleString('es-MX')}</b> aliados activos en línea · Ventas, compras y gasto operativo · {periodoLbl}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: C.textMuted, whiteSpace: 'nowrap' }}>
+                        <span className="bf-live-dot" />
+                        <span>Stream en vivo · ingiriendo <b style={{ color: C.text }}>{((D.pedidos*0.04)/1).toFixed(0)}K</b> eventos/hora</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                      {[
+                        { tag: 'VENTAS DOWNSTREAM',  label: 'Ventas agregadas de la red',     value: `$${ventasRed.toFixed(1)}M`,     sub: 'lo que venden los aliados a sus clientes finales', growth: '+34%', color: CHART.teal },
+                        { tag: 'COMPRAS PLATAFORMA', label: 'Compras totales en plataforma',  value: `$${comprasTotales.toFixed(1)}M`, sub: `${((comprasBafar/comprasTotales)*100).toFixed(0)}% BAFAR · ${((comprasExternos/comprasTotales)*100).toFixed(0)}% marcas externas`, growth: '+28%', color: CHART.navy },
+                        { tag: 'GASTO OPERATIVO',    label: 'Gasto operativo agregado',       value: `$${gastoOpRed.toFixed(1)}M`,    sub: 'nómina, renta, servicios y consumibles', growth: '+22%', color: CHART.bronze },
+                      ].map((kpi, i) => (
+                        <div key={i} style={{ background: C.surface, borderRadius: 14, padding: 20, position: 'relative', overflow: 'hidden', borderTop: `3px solid ${kpi.color}` }}>
+                          <div style={{ fontSize: 9, fontWeight: 800, color: kpi.color, letterSpacing: 0.8, marginBottom: 8 }}>{kpi.tag}</div>
+                          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8 }}>{kpi.label}</div>
+                          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.7px', lineHeight: 1, color: C.text }}>{kpi.value}</div>
+                          <div style={{ fontSize: 11, color: CHART.teal, fontWeight: 700, marginTop: 8 }}>{kpi.growth} vs MA</div>
+                          <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 10, lineHeight: 1.4 }}>{kpi.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* P&L CONSOLIDADO + COMPOSICIÓN DEL GASTO */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1fr', gap: 16, marginBottom: 16 }}>
+                    <div className="bf-corp-card" style={{ padding: 24 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>P&L consolidado de la red</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Si toda la red de aliados fuera una sola empresa · {periodoLbl}</div>
+
+                      {[
+                        { label: 'Ingresos por ventas (downstream)',          value: `$${ventasRed.toFixed(1)}M`,     color: C.text,      bold: true },
+                        { label: 'COGS — Compras a BAFAR',                     value: `-$${comprasBafar.toFixed(1)}M`, color: C.textMuted },
+                        { label: 'COGS — Compras a marcas externas',           value: `-$${comprasExternos.toFixed(1)}M`, color: C.textMuted },
+                        { label: 'Margen bruto consolidado',                   value: `$${(ventasRed - comprasTotales).toFixed(1)}M`, color: CHART.teal, bold: true, sub: `${(((ventasRed-comprasTotales)/ventasRed)*100).toFixed(1)}% sobre venta` },
+                        { label: 'Gasto operativo (nómina, renta, servicios)', value: `-$${gastoOpRed.toFixed(1)}M`,   color: C.textMuted },
+                        { label: 'Utilidad neta agregada',                     value: `$${utilidadRed.toFixed(1)}M`,   color: CHART.teal, bold: true, sub: `${margenConsolidado.toFixed(1)}% margen neto` },
+                      ].map((row, i, arr) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length-1 ? `1px solid ${C.border}` : 'none' }}>
+                          <span style={{ fontSize: 12.5, color: row.bold ? C.text : C.textMuted, fontWeight: row.bold ? 700 : 500 }}>{row.label}</span>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: 13.5, fontWeight: row.bold ? 800 : 600, color: row.color, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{row.value}</span>
+                            {row.sub && <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2 }}>{row.sub}</div>}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div style={{ background: `${CHART.teal}10`, borderRadius: 10, padding: 12, marginTop: 14, border: `1px solid ${CHART.teal}30` }}>
+                        <div style={{ fontSize: 11, color: C.text, lineHeight: 1.5 }}>
+                          <b style={{ color: CHART.teal }}>Benchmark food-service MX:</b> margen neto promedio de la industria 7.8% · La red Aliados está <b>{(margenConsolidado - 7.8).toFixed(1)} pp arriba</b> — los aliados con BAFAR Puntos rentabilizan mejor su operación.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bf-corp-card" style={{ padding: 24 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Composición del gasto operativo</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Aliado promedio · ¿en qué gasta cada peso?</div>
+
+                      {composicion.map((c, i) => (
+                        <div key={i} style={{ marginBottom: 11 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                            <span style={{ fontSize: 12, color: C.text }}>{c.cat}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: c.color, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{c.pct}%</span>
+                          </div>
+                          <HBar pct={(c.pct / maxComp) * 100} color={c.color} height={5} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* COMPORTAMIENTO + CATEGORÍAS DE VENTA */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                    <div className="bf-corp-card" style={{ padding: 24 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Comportamiento de compra de la red</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Patrones agregados · ¿cuándo compran los aliados?</div>
+
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 10 }}>Volumen por día de la semana</div>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 110, marginBottom: 22 }}>
+                        {semanal.map((d, i) => (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 4, height: '100%' }}>
+                            <div style={{ fontSize: 9.5, color: C.textMuted, fontWeight: 700 }}>{d.label}</div>
+                            <div style={{ width: '100%', height: `${d.pct}%`, background: d.pct >= 80 ? CHART.navy : (d.pct >= 50 ? CHART.slate : CHART.cool), borderRadius: 4, transition: 'height 0.6s ease' }} />
+                            <div style={{ fontSize: 10.5, color: C.textMuted, fontWeight: 700 }}>{d.dia}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 10 }}>Distribución por horario</div>
+                      {horarios.map((h, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 7 }}>
+                          <span style={{ fontSize: 10.5, color: C.textMuted, width: 54, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{h.hora}h</span>
+                          <div style={{ flex: 1 }}>
+                            <HBar pct={h.pct} color={h.pct >= 80 ? CHART.navy : (h.pct >= 50 ? CHART.teal : CHART.slate)} height={6} />
+                          </div>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, width: 34, textAlign: 'right' }}>{h.pct}%</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bf-corp-card" style={{ padding: 24 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Mix de venta del aliado promedio</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>¿Qué venden ellos a sus clientes finales?</div>
+
+                      {catsVenta.map((c, i) => (
+                        <div key={i} style={{ marginBottom: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
+                            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{c.cat}</span>
+                            <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+                              <span style={{ fontSize: 11, color: C.textMuted }}>{c.vol}/aliado</span>
+                              <span style={{ fontSize: 13, fontWeight: 800, color: CHART.navy, fontFamily: 'ui-monospace, SFMono-Regular, monospace', width: 36, textAlign: 'right' }}>{c.pct}%</span>
+                            </div>
+                          </div>
+                          <HBar pct={(c.pct / maxCatVenta) * 100} color={CHART.navy} height={5} />
+                        </div>
+                      ))}
+
+                      <div style={{ background: `${CHART.bronze}10`, borderRadius: 10, padding: 12, marginTop: 16, border: `1px solid ${CHART.bronze}30` }}>
+                        <div style={{ fontSize: 10.5, color: C.text, lineHeight: 1.5 }}>
+                          <b style={{ color: CHART.bronze }}>Insight:</b> 62% de la venta del aliado promedio es producto BAFAR transformado — alta dependencia y oportunidad de cross-sell.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SEGMENTACIÓN POR GIRO */}
+                  <div className="bf-corp-card" style={{ padding: 24, marginBottom: 16 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Segmentación por giro del aliado</div>
+                    <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 18 }}>Distribución del ecosistema · número de aliados, share de compra y ticket promedio por tipo de negocio</div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 10 }}>
+                      {giros.map((g, i) => (
+                        <div key={i} style={{
+                          background: C.card,
+                          border: `1px solid ${C.border}`,
+                          borderTop: `3px solid ${g.color}`,
+                          borderRadius: 10,
+                          padding: 14,
+                        }}>
+                          <div style={{ fontSize: 10.5, fontWeight: 700, color: C.text, lineHeight: 1.3, minHeight: 28, marginBottom: 8 }}>{g.nombre}</div>
+                          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.3px' }}>{g.count.toLocaleString('es-MX')}</div>
+                          <div style={{ fontSize: 9.5, color: C.textMuted, marginBottom: 10 }}>aliados</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: C.textMuted, paddingTop: 8, borderTop: `1px solid ${C.border}` }}>
+                            <span>{g.pctCompras}% compra</span>
+                            <span style={{ color: g.color, fontWeight: 800 }}>${g.ticket}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* INDICADORES AVANZADOS */}
+                  <div className="bf-corp-card" style={{ padding: 22, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700 }}>Indicadores avanzados de salud financiera</div>
+                      <div style={{ fontSize: 10.5, color: C.textMuted }}>métricas derivadas del modelo de big data</div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10 }}>
+                      {kpisAvanzados.map((k, i) => (
+                        <div key={i} style={{ background: C.surface, borderRadius: 10, padding: 14 }}>
+                          <div style={{ fontSize: 9.5, color: C.textMuted, lineHeight: 1.3, minHeight: 26, marginBottom: 6 }}>{k.label}</div>
+                          <div style={{ fontSize: 20, fontWeight: 800, color: k.color, letterSpacing: '-0.3px', lineHeight: 1 }}>{k.value}</div>
+                          {k.unit && <div style={{ fontSize: 9.5, color: C.textMuted, marginTop: 4 }}>{k.unit}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ═══ GENERAR ANÁLISIS AVANZADO ═══ */}
+                  {analisisFase === 'cerrado' && (
+                    <button
+                      onClick={() => {
+                        setAnalisisFase('cargando');
+                        setTimeout(() => setAnalisisFase('abierto'), 1500);
+                      }}
+                      style={{
+                        width: '100%',
+                        background: `linear-gradient(135deg, ${CHART.navy} 0%, ${CHART.steel} 100%)`,
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 14,
+                        padding: '22px 24px',
+                        fontSize: 14,
+                        fontWeight: 800,
+                        letterSpacing: 0.8,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        boxShadow: '0 4px 16px rgba(30,58,95,0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 14,
+                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(30,58,95,0.32)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(30,58,95,0.25)'; }}
+                    >
+                      <span style={{ background: 'rgba(255,255,255,0.18)', padding: '4px 10px', borderRadius: 6, fontSize: 9, letterSpacing: 1.2, fontWeight: 800 }}>IA · MODELO PROPIETARIO</span>
+                      <span style={{ textTransform: 'uppercase' }}>Generar análisis avanzado de oportunidades</span>
+                      <span style={{ fontSize: 18, opacity: 0.85 }}>→</span>
+                    </button>
+                  )}
+
+                  {analisisFase === 'cargando' && (
+                    <div className="bf-corp-card" style={{
+                      padding: 44, textAlign: 'center',
+                      background: `linear-gradient(135deg, ${CHART.navy}06 0%, ${CHART.steel}06 100%)`,
+                      border: `1px solid ${CHART.navy}25`,
+                    }}>
+                      <div style={{ display: 'flex', gap: 7, justifyContent: 'center', marginBottom: 18 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: CHART.navy, animation: 'pulse 1.4s ease infinite' }} />
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: CHART.navy, animation: 'pulse 1.4s ease infinite 0.2s' }} />
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: CHART.navy, animation: 'pulse 1.4s ease infinite 0.4s' }} />
+                      </div>
+                      <div style={{ fontSize: 13.5, fontWeight: 800, color: CHART.navy, marginBottom: 6, letterSpacing: 0.3 }}>Modelo avanzado en ejecución</div>
+                      <div style={{ fontSize: 11.5, color: C.textMuted, lineHeight: 1.5 }}>Cruzando 6 mega-flujos de datos · 12 escenarios contrafactuales · calibrando con referencias NACS y Euromonitor México…</div>
+                    </div>
+                  )}
+
+                  {analisisFase === 'abierto' && (
+                    <div className="bf-fade-up">
+                      {/* HERO RESULT */}
+                      <div style={{
+                        padding: 26,
+                        borderRadius: 14,
+                        background: `linear-gradient(135deg, ${CHART.navy} 0%, ${CHART.steel} 100%)`,
+                        color: 'white',
+                        marginBottom: 16,
+                        boxShadow: '0 6px 22px rgba(30,58,95,0.28)',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
+                          <div style={{ flex: 1, minWidth: 280 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                              <span style={{ background: 'rgba(255,255,255,0.18)', padding: '3px 9px', borderRadius: 4, fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>ANÁLISIS AVANZADO</span>
+                              <span style={{ fontSize: 10, opacity: 0.75 }}>v2.4 · {periodoLbl} · confianza 89%</span>
+                            </div>
+                            <div style={{ fontSize: 11, opacity: 0.8, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 }}>Costo de oportunidad agregado</div>
+                            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.6px', marginBottom: 8 }}>${opTotalMes.toFixed(1)}M / mes</div>
+                            <div style={{ fontSize: 12, opacity: 0.88, lineHeight: 1.55 }}>
+                              <b>6 oportunidades cuantificables</b> con captura potencial de <b>${opTotalAnual.toFixed(0)}M anualizados</b>. 3 son ganancias rápidas (plazo ≤ 3 meses) que suman <b>${quickWinsMes.toFixed(1)}M/mes</b> en ventas rescatables.
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 14, minWidth: 200 }}>
+                            <button onClick={() => setAnalisisFase('cerrado')} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: 'white', borderRadius: 8, padding: '7px 14px', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.6, fontFamily: 'inherit' }}>↻ RE-GENERAR</button>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: 9, opacity: 0.75, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>Retorno esperado a 12 meses</div>
+                              <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1, marginTop: 4 }}>3.4×</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 6 OPORTUNIDADES */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+                        {oportunidades.map((op, i) => (
+                          <div key={i} className="bf-corp-card" style={{
+                            padding: 20, borderLeft: `4px solid ${op.color}`,
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                                  <span style={{ background: `${op.color}15`, color: op.color, fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 4, letterSpacing: 0.6 }}>OPORTUNIDAD #{i+1}</span>
+                                  <span style={{ fontSize: 9.5, fontWeight: 700, color: op.confColor, textTransform: 'uppercase', letterSpacing: 0.5 }}>{op.confianza}</span>
+                                </div>
+                                <div style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: '-0.2px', lineHeight: 1.3 }}>{op.titulo}</div>
+                              </div>
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                <div style={{ fontSize: 9, color: C.textDim, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>Costo op./mes</div>
+                                <div style={{ fontSize: 19, fontWeight: 800, color: op.color, letterSpacing: '-0.3px', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{op.costoMes}</div>
+                              </div>
+                            </div>
+
+                            <div style={{ fontSize: 11.5, color: C.text, lineHeight: 1.55, marginBottom: 12 }}>
+                              <b style={{ color: CHART.navy }}>Hallazgo:</b> {op.hallazgo}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
+                              <div style={{ background: C.surface, borderRadius: 8, padding: '8px 10px' }}>
+                                <div style={{ fontSize: 8.5, color: C.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>Captura</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: CHART.teal, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{op.captura}</div>
+                              </div>
+                              <div style={{ background: C.surface, borderRadius: 8, padding: '8px 10px' }}>
+                                <div style={{ fontSize: 8.5, color: C.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>Plazo</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{op.ttm}</div>
+                              </div>
+                              <div style={{ background: C.surface, borderRadius: 8, padding: '8px 10px' }}>
+                                <div style={{ fontSize: 8.5, color: C.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>Retorno</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: CHART.bronze, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{op.roi}</div>
+                              </div>
+                            </div>
+
+                            <div style={{ background: `${op.color}08`, borderLeft: `3px solid ${op.color}`, borderRadius: '0 8px 8px 0', padding: '10px 12px' }}>
+                              <div style={{ fontSize: 9, color: op.color, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 3 }}>Acción recomendada</div>
+                              <div style={{ fontSize: 11, color: C.text, lineHeight: 1.5 }}>{op.accion}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* PRIORIZACIÓN POR HORIZONTE */}
+                      <div className="bf-corp-card" style={{ padding: 24 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16, gap: 12 }}>
+                          <div>
+                            <div style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 2 }}>Priorización sugerida — captura por horizonte temporal</div>
+                            <div style={{ fontSize: 11, color: C.textMuted }}>Costo de oportunidad acumulado por plazo · evaluación Monte Carlo (10 mil iteraciones)</div>
+                          </div>
+                          <div style={{ fontSize: 10.5, color: C.textMuted }}>
+                            <span style={{ display: 'inline-block', width: 10, height: 10, background: CHART.teal, borderRadius: 2, marginRight: 5, verticalAlign: 'middle' }} />Ganancias rápidas
+                            <span style={{ display: 'inline-block', width: 10, height: 10, background: CHART.bronze, borderRadius: 2, marginLeft: 14, marginRight: 5, verticalAlign: 'middle' }} />Mediano plazo
+                            <span style={{ display: 'inline-block', width: 10, height: 10, background: CHART.burgundy, borderRadius: 2, marginLeft: 14, marginRight: 5, verticalAlign: 'middle' }} />Estratégicas
+                          </div>
+                        </div>
+
+                        {/* Barra apilada */}
+                        <div style={{ height: 36, borderRadius: 8, overflow: 'hidden', display: 'flex', marginBottom: 12, border: `1px solid ${C.border}` }}>
+                          <div style={{ flex: quickWinsMes, background: CHART.teal, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 800, letterSpacing: 0.3 }}>
+                            ${quickWinsMes.toFixed(1)}M
+                          </div>
+                          <div style={{ flex: 1.9, background: CHART.bronze, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 800 }}>
+                            $1.9M
+                          </div>
+                          <div style={{ flex: (opCrossSellM + 3.6), background: CHART.burgundy, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 800 }}>
+                            ${(opCrossSellM + 3.6).toFixed(1)}M
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                          {[
+                            { tag: 'GANANCIAS RÁPIDAS · PLAZO ≤ 3 MESES', color: CHART.teal, val: `$${quickWinsMes.toFixed(1)}M/mes`, desc: 'Fines de semana activados + Academy para los 300 principales + premiumización de cortes. Ejecutables sin nueva infraestructura.' },
+                            { tag: 'MEDIANO PLAZO · 4–6 MESES', color: CHART.bronze, val: '$1.9M/mes', desc: 'Hotelería y banquetes — requiere equipo dedicado de adquisición comercial de alta gama.' },
+                            { tag: 'ESTRATÉGICAS · 6–9 MESES', color: CHART.burgundy, val: `$${(opCrossSellM + 3.6).toFixed(1)}M/mes`, desc: 'Sustitución de marcas externas + cierre de variabilidad inter-aliado. Mayor potencial pero requiere programa de cambio.' },
+                          ].map((h, i) => (
+                            <div key={i} style={{ background: C.surface, borderRadius: 10, padding: 14, borderTop: `3px solid ${h.color}` }}>
+                              <div style={{ fontSize: 9, fontWeight: 800, color: h.color, letterSpacing: 0.7, marginBottom: 5 }}>{h.tag}</div>
+                              <div style={{ fontSize: 18, fontWeight: 800, color: C.text, letterSpacing: '-0.3px', marginBottom: 6, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{h.val}</div>
+                              <div style={{ fontSize: 10.5, color: C.textMuted, lineHeight: 1.45 }}>{h.desc}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{ marginTop: 16, background: `${CHART.navy}08`, border: `1px solid ${CHART.navy}25`, borderRadius: 10, padding: '12px 14px', fontSize: 11.5, color: C.text, lineHeight: 1.5 }}>
+                          <b style={{ color: CHART.navy }}>Recomendación del modelo:</b> ejecutar primero las 3 ganancias rápidas en paralelo (capturan <b>${quickWinsMes.toFixed(1)}M/mes en 90 días</b>) — el flujo de caja liberado financia al equipo de adquisición de alta gama y al programa de homogeneización. Captura completa estimada al mes 12: <b>${(opTotalMes * 0.62).toFixed(1)}M/mes</b> recurrente.
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}
